@@ -3,87 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Memory Test</title>
+  <title>Memory Test Game</title>
   <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      font-family: Arial, sans-serif;
-    }
-    #root {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
-      background-color: #ffffff;
-    }
-    .overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 2;
-      color: #000000;
-      padding: 20px;
-    }
-    .overlay div {
-      background-color: rgba(255, 255, 255, 0.9);
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 300px;
-    }
-    .overlay h2 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .overlay input, .overlay button {
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-      margin-bottom: 10px;
-    }
-    .overlay button {
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    .overlay button.start-game {
-      background-color: #2196F3;
-      margin-top: 20px;
-      width: 100%;
-    }
-    .overlay .players {
-      margin-top: 20px;
-      padding: 10px;
-      background-color: #f5f5f5;
-      border-radius: 5px;
-    }
-    .overlay .players div {
-      padding: 5px;
-      background-color: white;
-      margin-bottom: 5px;
-      border-radius: 3px;
-    }
+    body, html { margin: 0; padding: 0; width: 100%; height: 100%; }
+    #root { width: 100%; height: 100%; }
   </style>
 </head>
 <body>
   <div id="root"></div>
-  <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/three/build/three.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script type="text/babel">
-    const { useEffect, useRef, useState } = React;
+  <script type="module">
+    import React, { useEffect, useRef, useState } from 'react';
+    import ReactDOM from 'react-dom/client';
+    import * as THREE from 'three';
 
     const App = () => {
       const resetGame = () => {
@@ -100,7 +31,7 @@
       const [players, setPlayers] = useState([]);
       const [currentName, setCurrentName] = useState('');
       const [isRegistering, setIsRegistering] = useState(true);
-      const [gameState, setGameState] = useState('setup'); // setup, memorize, countdown, recall
+      const [gameState, setGameState] = useState('setup');
       const [playerAssignments, setPlayerAssignments] = useState([]);
       const [timeLeft, setTimeLeft] = useState(10);
       const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
@@ -117,9 +48,7 @@
         const colors = ['#FF0000', '#FFA500', '#FFFF00', '#008000', '#0000FF', '#800080'];
         return colors[Math.floor(Math.random() * colors.length)];
       };
-      const generateRandomNumber = () => {
-        return Math.floor(Math.random() * 9) + 1;
-      };
+      const generateRandomNumber = () => Math.floor(Math.random() * 9) + 1;
       const handleStartGame = () => {
         if (players.length > 0) {
           setIsRegistering(false);
@@ -135,175 +64,119 @@
       };
       const [selectedColor, setSelectedColor] = useState(null);
       const [selectedNumber, setSelectedNumber] = useState(null);
-      const handleColorSelect = (color) => {
-        setSelectedColor(color);
-      };
-      const handleNumberSelect = (number) => {
-        setSelectedNumber(number);
-      };
+      const handleColorSelect = (color) => setSelectedColor(color);
+      const handleNumberSelect = (number) => setSelectedNumber(number);
       const handlePlayerRecall = () => {
         const currentAssignment = playerAssignments[currentPlayerIndex];
-        
         setPlayerAnswers(prev => [...prev, {
           name: currentAssignment.name,
           correct: selectedColor === currentAssignment.color && selectedNumber === currentAssignment.number
         }]);
-        
-        // Reset selections for next player
         setSelectedColor(null);
         setSelectedNumber(null);
-        
         if (currentPlayerIndex < players.length - 1) {
           setCurrentPlayerIndex(prev => prev + 1);
         } else {
           setGameState('results');
         }
       };
-      useEffect(() => {
-        // Scene setup
-        // Create and configure scene
+            useEffect(() => {
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0xf0f0f0);
-        // Create and configure camera
-        const camera = new THREE.PerspectiveCamera(
-          75,
-          window.innerWidth / window.innerHeight,
-          0.1,
-          1000
-        );
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         camera.position.z = 5;
-        // Create and configure renderer
-        const renderer = new THREE.WebGLRenderer({
-          antialias: true,
-          alpha: true
-        });
-        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setClearColor(0xf0f0f0, 1);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        
-        // Handle window resizing
+
         const handleResize = () => {
           const width = window.innerWidth;
           const height = window.innerHeight;
           const pixelRatio = window.devicePixelRatio;
-          
           camera.aspect = width / height;
           camera.updateProjectionMatrix();
-          
           renderer.setSize(width, height);
           renderer.setPixelRatio(pixelRatio);
-          
-          // Update camera position to maintain cube visibility
           camera.position.z = 5;
         };
-        
-        // Clean up existing canvas and append new one
+
         while (mountRef.current.firstChild) {
           mountRef.current.removeChild(mountRef.current.firstChild);
         }
         mountRef.current.appendChild(renderer.domElement);
-        
-        // Ensure canvas is visible
         renderer.domElement.style.display = 'block';
         renderer.domElement.style.width = '100%';
         renderer.domElement.style.height = '100%';
-        handleResize(); // Call once to set initial dimensions
+        handleResize();
         window.addEventListener('resize', handleResize);
-        
-        // Add lighting
+
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         const pointLight = new THREE.PointLight(0xffffff, 1);
         pointLight.position.set(5, 5, 5);
-        
         scene.add(ambientLight);
         scene.add(pointLight);
-        
         camera.position.z = 5;
-        
-        // Animation
+
         const animate = () => {
           requestAnimationFrame(animate);
           renderer.render(scene, camera);
         };
-        
+
         animate();
-        
-        // Proper cleanup
+
         return () => {
           window.removeEventListener('resize', handleResize);
-          
-          // Dispose of Three.js objects
           scene.remove(ambientLight);
           scene.remove(pointLight);
-          
-          // Clean up renderer
           if (renderer) {
             renderer.dispose();
             if (mountRef.current && renderer.domElement) {
               mountRef.current.removeChild(renderer.domElement);
             }
           }
-          
-          // Clear the scene
-          while(scene.children.length > 0){ 
-            scene.remove(scene.children[0]); 
+          while (scene.children.length > 0) {
+            scene.remove(scene.children[0]);
           }
         };
       }, []);
+
       return (
-        <div style={{
-          position: 'relative',
-          width: '100vw',
-          height: '100vh',
-          backgroundColor: '#ffffff',
-        }}>
-          <div ref={mountRef} style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            zIndex: 1,
-          }} />
-          <div className="overlay">
+        <div style={{ position: 'relative', width: '100vw', height: '100vh', backgroundColor: '#ffffff' }}>
+          <div ref={mountRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', zIndex: 2, fontFamily: 'Arial, sans-serif', color: '#000000', padding: '20px' }}>
             {isRegistering ? (
-              <div>
-                <h2>Memory Test</h2>
-                <div>
-                  <input
-                    type="text"
-                    value={currentName}
-                    onChange={(e) => setCurrentName(e.target.value)}
-                    placeholder="Enter player name"
-                  />
-                  <button onClick={handleAddPlayer}>Add Player</button>
+              <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', width: '100%', maxWidth: '300px' }}>
+                <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Memory Test</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <input type="text" value={currentName} onChange={(e) => setCurrentName(e.target.value)} placeholder="Enter player name" style={{ padding: '10px', borderRadius: '5px', border: '1px solid #ccc', fontSize: '16px' }} />
+                  <button onClick={handleAddPlayer} style={{ padding: '10px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '16px' }}>Add Player</button>
                   {players.length > 0 && (
-                    <div className="players">
-                      <h3>Players:</h3>
+                    <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '5px' }}>
+                      <h3 style={{ margin: '0 0 10px 0' }}>Players:</h3>
                       {players.map((player, index) => (
-                        <div key={index}>{player}</div>
+                        <div key={index} style={{ padding: '5px', backgroundColor: 'white', marginBottom: '5px', borderRadius: '3px' }}>{player}</div>
                       ))}
                     </div>
                   )}
                   {players.length > 0 && (
-                    <button className="start-game" onClick={handleStartGame}>Start Game</button>
+                    <button onClick={handleStartGame} style={{ padding: '10px', backgroundColor: '#2196F3', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '16px', marginTop: '20px', width: '100%' }}>Start Game</button>
                   )}
                 </div>
               </div>
             ) : (
-              <div>
+              <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', padding: '10px', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', textAlign: 'center' }}>
                 {gameState === 'memorize' && (
-                  <div>
-                    <h2>Remember Your Color and Number!</h2>
-                    <p>Players: Take a good look at your color and number. In two minutes you will be asked to remember them!</p>
-                    <div>
+                  <div style={{ maxWidth: '300px', margin: '0 auto' }}>
+                    <h2 style={{ fontSize: '20px', margin: '10px 0' }}>Remember Your Color and Number!</h2>
+                    <p style={{ fontSize: '16px', margin: '10px 0' }}>Players: Take a good look at your color and number. In two minutes you will be asked to remember them!</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       {playerAssignments.map((assignment, index) => (
-                        <div key={index}>
-                          <span>{assignment.name}</span>
-                          <div>
-                            <div style={{ backgroundColor: assignment.color, width: '20px', height: '20px', borderRadius: '4px' }}></div>
-                            <span>{assignment.number}</span>
+                        <div key={index} style={{ padding: '2px 4px', backgroundColor: 'white', borderRadius: '4px', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '14px', marginBottom: '2px' }}>
+                          <span style={{ fontSize: '18px', fontWeight: 'bold', marginRight: '4px' }}>{assignment.name}</span>
+                          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                            <div style={{ width: '20px', height: '20px', backgroundColor: assignment.color, borderRadius: '4px', marginLeft: '4px' }}></div>
+                            <span style={{ fontSize: '20px', marginLeft: '4px' }}>{assignment.number}</span>
                           </div>
                         </div>
                       ))}
@@ -324,24 +197,22 @@
                           return prev - 1;
                         });
                       }, 1000);
-                    }}>Ready to Start 2 Minute Timer</button>
+                    }} style={{ marginTop: '20px', padding: '15px 30px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}>Ready to Start 2 Minute Timer</button>
                   </div>
                 )}
                 {gameState === 'countdown' && (
                   <div>
                     <h2>Counting Down!</h2>
-                    <div style={{ fontSize: '72px', fontWeight: 'bold', margin: '30px 0', color: '#2196F3' }}>
-                      {`${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, '0')}`}
-                    </div>
-                    <p>Focus and remember your color and number...</p>
+                    <div style={{ fontSize: '72px', fontWeight: 'bold', margin: '30px 0', color: '#2196F3' }}>{`${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, '0')}`}</div>
+                    <p style={{ fontSize: '18px', maxWidth: '280px', margin: '0 auto', wordWrap: 'break-word', lineHeight: '1.4' }}>Focus and remember your color and number...</p>
                   </div>
                 )}
                 {gameState === 'recall' && (
                   <div>
-                    <h2><span>{playerAssignments[currentPlayerIndex].name}</span>'s Turn</h2>
-                    <div>
-                      <div>
-                        <div>
+                    <h2 style={{ fontSize: '24px' }}><span style={{ fontWeight: 'bold' }}>{playerAssignments[currentPlayerIndex].name}</span>'s Turn</h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                      <div style={{ marginBottom: '10px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '5px', margin: '5px 0' }}>
                           {[
                             { color: '#FF0000', name: 'Red' },
                             { color: '#FFA500', name: 'Orange' },
@@ -350,67 +221,16 @@
                             { color: '#0000FF', name: 'Blue' },
                             { color: '#800080', name: 'Purple' }
                           ].map((colorOption) => (
-                            <button
-                              key={colorOption.color}
-                              onClick={() => handleColorSelect(colorOption.color)}
-                              style={{
-                                width: '60px',
-                                height: '60px',
-                                backgroundColor: colorOption.color,
-                                border: selectedColor === colorOption.color ? '5px solid black' : '3px solid white',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                boxShadow: selectedColor === colorOption.color ? '0 0 10px rgba(0,0,0,0.5)' : '0 2px 5px rgba(0,0,0,0.2)',
-                                transition: 'all 0.2s'
-                              }}
-                              onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                              onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                              title={colorOption.name}
-                            />
+                            <button key={colorOption.color} onClick={() => handleColorSelect(colorOption.color)} style={{ width: '60px', height: '60px', backgroundColor: colorOption.color, border: selectedColor === colorOption.color ? '5px solid black' : '3px solid white', borderRadius: '5px', cursor: 'pointer', boxShadow: selectedColor === colorOption.color ? '0 0 10px rgba(0,0,0,0.5)' : '0 2px 5px rgba(0,0,0,0.2)', transition: 'all 0.2s' }} onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'} onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'} title={colorOption.name} />
                           ))}
                         </div>
                       </div>
-                      <div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '5px', margin: '5px 0' }}>
                         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => (
-                          <button
-                            key={number}
-                            onClick={() => handleNumberSelect(number)}
-                            style={{
-                              width: '60px',
-                              height: '60px',
-                              backgroundColor: selectedNumber === number ? '#f0f0f0' : 'white',
-                              border: selectedNumber === number ? '5px solid black' : '3px solid #ccc',
-                              borderRadius: '5px',
-                              cursor: 'pointer',
-                              fontSize: '24px',
-                              fontWeight: 'bold',
-                              boxShadow: selectedNumber === number ? '0 0 10px rgba(0,0,0,0.5)' : '0 2px 5px rgba(0,0,0,0.2)',
-                              transition: 'all 0.2s'
-                            }}
-                            onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                            onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                          >
-                            {number}
-                          </button>
+                          <button key={number} onClick={() => handleNumberSelect(number)} style={{ width: '60px', height: '60px', backgroundColor: selectedNumber === number ? '#f0f0f0' : 'white', border: selectedNumber === number ? '5px solid black' : '3px solid #ccc', borderRadius: '5px', cursor: 'pointer', fontSize: '24px', fontWeight: 'bold', boxShadow: selectedNumber === number ? '0 0 10px rgba(0,0,0,0.5)' : '0 2px 5px rgba(0,0,0,0.2)', transition: 'all 0.2s' }} onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'} onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)' }}>{number}</button>
                         ))}
                       </div>
-                      <button
-                        onClick={handlePlayerRecall}
-                        disabled={!selectedColor || !selectedNumber}
-                        style={{
-                          padding: '10px',
-                          backgroundColor: (!selectedColor || !selectedNumber) ? '#cccccc' : '#4CAF50',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '5px',
-                          cursor: (!selectedColor || !selectedNumber) ? 'not-allowed' : 'pointer',
-                          fontSize: '16px',
-                          marginTop: '20px',
-                          width: '100%'
-                        }}
-                      >
-                        Confirm Choices
-                      </button>
+                      <button onClick={handlePlayerRecall} disabled={!selectedColor || !selectedNumber} style={{ padding: '10px', backgroundColor: (!selectedColor || !selectedNumber) ? '#cccccc' : '#4CAF50', color: 'white', border: 'none', borderRadius: '5px', cursor: (!selectedColor || !selectedNumber) ? 'not-allowed' : 'pointer', fontSize: '16px', marginTop: '20px', width: '100%' }}>Confirm Choices</button>
                     </div>
                   </div>
                 )}
@@ -418,32 +238,9 @@
                   <div>
                     <h2>Results</h2>
                     {playerAnswers.map((result, index) => (
-                      <div key={index} style={{
-                        padding: '10px',
-                        backgroundColor: result.correct ? '#90EE90' : '#FFB6C1',
-                        margin: '5px',
-                        borderRadius: '5px'
-                      }}>
-                        {result.name}: {result.correct ? 'Correct!' : 'Incorrect'}
-                      </div>
+                      <div key={index} style={{ padding: '10px', backgroundColor: result.correct ? '#90EE90' : '#FFB6C1', margin: '5px', borderRadius: '5px' }}>{result.name}: {result.correct ? 'Correct!' : 'Incorrect'}</div>
                     ))}
-                    <button
-                      onClick={resetGame}
-                      style={{
-                        padding: '15px 30px',
-                        backgroundColor: '#2196F3',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                        fontSize: '16px',
-                        fontWeight: 'bold',
-                        marginTop: '20px',
-                        width: '100%'
-                      }}
-                    >
-                      Start New Game
-                    </button>
+                    <button onClick={resetGame} style={{ padding: '15px 30px', backgroundColor: '#2196F3', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', marginTop: '20px', width: '100%' }}>Start New Game</button>
                   </div>
                 )}
               </div>
